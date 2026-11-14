@@ -1,0 +1,13 @@
+{
+ "_reason": "Existing over-limit functions accepted on 2026-11-13; new code must stay within the limits. Fix them when touched.",
+ "functions": {
+  "src/linkblog_commons/feed.py::generate_feed": {
+   "length": 47,
+   "nloc": 29,
+   "param": 5,
+   "nd": 0,
+   "token": 200,
+   "ccn": 6
+  }
+ }
+}
