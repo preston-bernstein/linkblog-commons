@@ -5,6 +5,11 @@ description = "Shared linkblog/link-post library for home-lab blog projects — 
 requires-python = ">=3.11"
 dependencies = ["feedgen>=1.0.0,<2"]
 
+[project.optional-dependencies]
+# The shared CI installs these extras (pip install -e ".[...]"). Keep them next to the dependency group.
+test = ["pytest>=8", "pytest-socket>=0.7"]
+dev = ["ruff==0.16.1", "mutmut>=3.7"]
+
 [dependency-groups]
 dev = ["pytest>=8", "pytest-socket>=0.7", "ruff==0.16.1", "mypy>=1.13", "mutmut>=3.7"]
 
