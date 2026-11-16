@@ -15,13 +15,25 @@ permissions:
   contents: read
 
 jobs:
-  ci:
-    uses: preston-bernstein/ci-workflows/.github/workflows/python.yml@980585f4e9c3c1ef982cb934e153f925121fe0c0 # v1
-    with:
-      python-versions: '["3.11"]'
-      install: pip install -e ".[test,dev]"
-      lint: ruff check .
-      test: pytest -m "not network"
-
-  workflows:
-    uses: preston-bernstein/ci-workflows/.github/workflows/actions-lint.yml@980585f4e9c3c1ef982cb934e153f925121fe0c0 # v1
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install the gate tools (hash-locked or checksum-verified)
+        run: bash scripts/install-tools.sh "$RUNNER_TEMP/ci-tools"
+      - name: Core (size, names, complexity, duplication)
+        run: bash scripts/core-validate.sh
+      - name: GitHub Actions (pins, permissions, actionlint, zizmor)
+        run: bash scripts/gha-validate.sh
+      - name: Python (ruff, mypy, pytest)
+        run: bash scripts/py-validate.sh
+      - name: Shell (shellcheck, shfmt, bats)
+        run: bash scripts/shell-validate.sh
+      - name: Writing (vale)
+        env:
+          WRITING_BASE_BRANCH: main
+        run: bash scripts/writing-validate.sh

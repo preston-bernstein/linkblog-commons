@@ -24,9 +24,7 @@ def hugo_render(record: LinkPost, content_dir: str | Path) -> Path:
     if not content_dir.is_dir() or not os.access(content_dir, os.W_OK):
         raise LinkBlogError("io_error")
 
-    digest = hashlib.sha256(
-        f"{record.url}|{record.published}".encode()
-    ).hexdigest()
+    digest = hashlib.sha256(f"{record.url}|{record.published}".encode()).hexdigest()
     filename = f"{record.published[:10]}-{digest[:16]}.md"
     out_path = content_dir / filename
 
@@ -39,7 +37,7 @@ def hugo_render(record: LinkPost, content_dir: str | Path) -> Path:
         "---\n"
         f"title: {quoted_url}\n"
         f"url: {quoted_url}\n"
-        f"published: \"{record.published}\"\n"
+        f'published: "{record.published}"\n'
         f"tags: [{tags}]\n"
         "---\n"
     )

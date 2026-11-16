@@ -1,1 +1,2 @@
-CORE_DUP_THRESHOLD=6  # existing duplication is 5.75%; lower it as clones are removed
+CORE_DUP_THRESHOLD=4.8  # existing duplication is 4.70%; lower it as clones are removed
+CORE_EXCLUDE=*/scripts/*  # scripts/ holds pack checkers and Vale styles copied unchanged from the stack packs; fix them upstream

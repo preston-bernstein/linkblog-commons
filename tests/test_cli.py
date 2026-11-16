@@ -161,9 +161,7 @@ FEED_ARGS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "dropped_flag", ["--input", "--output", "--title", "--link"]
-)
+@pytest.mark.parametrize("dropped_flag", ["--input", "--output", "--title", "--link"])
 def test_main_feed_missing_any_required_arg_exits_two(dropped_flag):
     args = list(FEED_ARGS)
     idx = args.index(dropped_flag)
@@ -224,9 +222,7 @@ def test_main_feed_prints_ok_envelope_and_returns_zero(tmp_path, capsys):
 def test_main_feed_with_id_flag_sets_feed_id(tmp_path, capsys):
     input_path = tmp_path / "records.json"
     input_path.write_text(
-        json.dumps(
-            [{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]
-        ),
+        json.dumps([{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]),
         encoding="utf-8",
     )
     output_path = tmp_path / "feed.xml"
@@ -256,9 +252,7 @@ def test_main_feed_with_id_flag_sets_feed_id(tmp_path, capsys):
 
 
 def test_main_feed_stdin_input_in_process(tmp_path, capsys, monkeypatch):
-    records = json.dumps(
-        [{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]
-    )
+    records = json.dumps([{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}])
     monkeypatch.setattr(sys, "stdin", io.StringIO(records))
     output_path = tmp_path / "feed.xml"
 

@@ -1,0 +1,4 @@
+lizard==1.26.1
+zizmor==1.32.0
+shellcheck-py==0.11.0.1
+uv==0.13.7

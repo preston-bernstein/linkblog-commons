@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from typing import Any
 
 from linkblog_commons.errors import LinkBlogError
 from linkblog_commons.feed import generate_feed
@@ -8,7 +9,9 @@ from linkblog_commons.record import LinkPost
 from linkblog_commons.render import hugo_render
 
 
-def _build_render_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _build_render_parser(
+    subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
+) -> argparse.ArgumentParser:
     p = subparsers.add_parser("render", help="render a single link post to a Hugo content file")
     p.add_argument("--url", required=True)
     p.add_argument("--published", required=True)
@@ -18,7 +21,9 @@ def _build_render_parser(subparsers: argparse._SubParsersAction) -> argparse.Arg
     return p
 
 
-def _build_feed_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _build_feed_parser(
+    subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]",
+) -> argparse.ArgumentParser:
     p = subparsers.add_parser("feed", help="generate an Atom feed from a JSON array of link posts")
     p.add_argument("--input", required=True, help="path to a JSON array file, or - to read stdin")
     p.add_argument("--output", required=True)
@@ -36,7 +41,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_render(args: argparse.Namespace) -> dict:
+def _run_render(args: argparse.Namespace) -> dict[str, Any]:
     record = LinkPost(
         url=args.url,
         published=args.published,
@@ -47,17 +52,17 @@ def _run_render(args: argparse.Namespace) -> dict:
     return {"path": str(path), "filename": path.name}
 
 
-def _run_feed(args: argparse.Namespace) -> dict:
+def _run_feed(args: argparse.Namespace) -> dict[str, Any]:
     if args.input == "-":
         raw = sys.stdin.read()
     else:
-        with open(args.input, "r", encoding="utf-8") as f:
+        with open(args.input, encoding="utf-8") as f:
             raw = f.read()
 
     try:
         data = json.loads(raw)
-    except json.JSONDecodeError:
-        raise LinkBlogError("invalid_json")
+    except json.JSONDecodeError as exc:
+        raise LinkBlogError("invalid_json") from exc
 
     if not isinstance(data, list):
         raise LinkBlogError("invalid_json")
@@ -74,13 +79,15 @@ def _run_feed(args: argparse.Namespace) -> dict:
     return {"path": str(path), "entry_count": len(records)}
 
 
-def _envelope(status: str, result: dict | None, error: dict | None) -> str:
-    return json.dumps({
-        "schema_version": 1,
-        "status": status,
-        "result": result,
-        "error": error,
-    })
+def _envelope(status: str, result: dict[str, Any] | None, error: dict[str, Any] | None) -> str:
+    return json.dumps(
+        {
+            "schema_version": 1,
+            "status": status,
+            "result": result,
+            "error": error,
+        }
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -95,13 +102,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             raise LinkBlogError("internal_error")
 
-        print(_envelope("ok", result, None))
+        print(_envelope("ok", result, None))  # noqa: T201 -- the JSON envelope is the CLI output
         return 0
     except LinkBlogError as e:
-        print(_envelope("fail", None, {"code": e.code, "fields": list(e.fields)}))
+        print(  # noqa: T201 -- the JSON envelope is the CLI output
+            _envelope("fail", None, {"code": e.code, "fields": list(e.fields)})
+        )
         return 1
-    except Exception:  # noqa: BLE001 — deliberate catch-all: a shell caller must
+    except Exception:  # noqa: BLE001 -- deliberate catch-all: a shell caller must
         # never see a raw Python traceback on stdout (see plan.md's error-mapping
         # design); any unanticipated exception is mapped to "internal_error".
-        print(_envelope("fail", None, {"code": "internal_error", "fields": []}))
+        print(  # noqa: T201 -- the JSON envelope is the CLI output
+            _envelope("fail", None, {"code": "internal_error", "fields": []})
+        )
         return 1

@@ -5,9 +5,8 @@ description = "Shared linkblog/link-post library for home-lab blog projects — 
 requires-python = ">=3.11"
 dependencies = ["feedgen>=1.0.0,<2"]
 
-[project.optional-dependencies]
-test = ["pytest>=8", "pytest-socket>=0.7"]
-dev = ["ruff==0.16.1", "mutmut>=3.7"]
+[dependency-groups]
+dev = ["pytest>=8", "pytest-socket>=0.7", "ruff==0.16.1", "mypy>=1.13", "mutmut>=3.7"]
 
 [build-system]
 requires = ["hatchling"]
@@ -17,7 +16,8 @@ build-backend = "hatchling.build"
 packages = ["src/linkblog_commons"]
 
 [tool.pytest.ini_options]
-addopts = "--disable-socket"
+testpaths = ["tests"]
+addopts = ["--disable-socket", "--strict-markers", "--strict-config", "-ra"]
 markers = [
     "network: tests requiring live internet access",
 ]
@@ -27,8 +27,28 @@ paths_to_mutate = ["src/linkblog_commons/"]
 tests_dir = ["tests/"]
 runner = ".venv/bin/pytest -x -q"
 
+[tool.ruff]
+line-length = 100
+# Pack checkers in scripts/ are copied unchanged from the stack packs.
+extend-exclude = ["scripts/*.py", "docs"]
+
 [tool.ruff.lint]
-# Pin the rule set explicitly. With no select, ruff applies its own default,
-# which has widened across releases -- a ruff upgrade alone could then turn CI
-# red with no change here. This is ruff's long-standing default, written down.
-select = ["E4", "E7", "E9", "F"]
+# Pinned on purpose: ruff's default set changes between releases. An empty ignore list means
+# every exception is a decision made in a code comment (# noqa: CODE -- reason), not in config.
+select = [
+  "E", "F", "I", "N", "UP",
+  "S", "B", "BLE",
+  "ASYNC",
+  "ANN",
+  "T20",
+  "G",
+  "PGH", "RUF",
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "ANN", "S314", "S603"]
+
+[tool.mypy]
+strict = true
+files = ["src"]

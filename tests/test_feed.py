@@ -154,9 +154,7 @@ def test_feed_entry_includes_category_terms_for_tagged_record(tmp_path):
     tree = ET.parse(output_path)
     root = tree.getroot()
     entries = _entries(root)
-    category_terms = {
-        el.get("term") for el in entries[0].findall(f"{ATOM_NS}category")
-    }
+    category_terms = {el.get("term") for el in entries[0].findall(f"{ATOM_NS}category")}
     assert category_terms == {"news", "tech"}
 
 

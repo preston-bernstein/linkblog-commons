@@ -1,0 +1,1 @@
+scripts/*-validate.sh pack gate scripts are copied unchanged from the stack packs; their own formatting and quoting differ from the repo shfmt and ShellCheck settings. Fix upstream in the packs.
