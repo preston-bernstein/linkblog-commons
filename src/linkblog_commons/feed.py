@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from feedgen.feed import FeedGenerator
+from feedgen.feed import FeedGenerator  # type: ignore[import-untyped] # feedgen ships no stubs
 
 from linkblog_commons.record import LinkPost
 

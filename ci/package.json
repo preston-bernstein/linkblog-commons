@@ -1,0 +1,9 @@
+{
+  "name": "linkblog-commons-ci-tools",
+  "private": true,
+  "description": "Pinned Node tools for the CI gates. Not part of the library.",
+  "devDependencies": {
+    "bats": "1.13.0",
+    "jscpd": "5.4.3"
+  }
+}

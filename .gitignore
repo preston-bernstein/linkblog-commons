@@ -6,3 +6,5 @@ dist/
 .env
 .env.*
 !.env.example
+.ci-tools/
+ci/node_modules/

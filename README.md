@@ -19,7 +19,7 @@ The first consumer is `pres-ber-blog` (Hugo). Sibling repos `scraper-commons`, `
 ## Install
 
 ```bash
-pip install -e ".[test,dev]"
+uv sync
 ```
 
 Python 3.11 or newer. The one runtime dependency is `feedgen`.
@@ -56,11 +56,10 @@ from linkblog_commons.feed import generate_feed
 ## Test
 
 ```bash
-pytest -m "not network"
-ruff check .
+bash scripts/py-validate.sh
 ```
 
-Tests block network access. Run `scripts/install-hooks.sh` once per clone to enable the git hooks. The hooks need `gitleaks`.
+The script runs ruff, mypy and pytest. Run the other gates through the hook, or see `AGENTS.md`. Tests block network access. Run `scripts/install-hooks.sh` once per clone to enable the git hooks. The hooks need `gitleaks`.
 
 ## Where things live
 
