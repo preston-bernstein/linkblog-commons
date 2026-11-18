@@ -45,8 +45,11 @@ install_binaries() {
   tar -xzf "$work/vale.tar.gz" -C "$bin" vale
 }
 
+# Global, not local: the EXIT trap runs after main returns, when a local would be gone.
+work=""
+
 main() {
-  local root dir bin work
+  local root dir bin
   root="$(git rev-parse --show-toplevel)"
   dir="${1:-$PWD/.ci-tools}"
   need python3
@@ -55,8 +58,7 @@ main() {
   need sha256sum
   mkdir -p "$dir/bin"
   work="$(mktemp -d)"
-  # shellcheck disable=SC2064 # expand now: "$work" is local and gone when the trap fires
-  trap "rm -rf '$work'" EXIT
+  trap 'rm -rf "$work"' EXIT
   bin="$dir/bin"
 
   python3 -m venv "$dir/venv"

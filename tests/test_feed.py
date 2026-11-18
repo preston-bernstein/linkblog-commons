@@ -10,6 +10,17 @@ def _entries(tree_root):
     return tree_root.findall(f"{ATOM_NS}entry")
 
 
+def _feed_root(tmp_path, records):
+    output_path = tmp_path / "feed.xml"
+    generate_feed(
+        records,
+        output_path,
+        feed_title="My Link Blog",
+        feed_link="https://example.com/",
+    )
+    return ET.parse(output_path).getroot()
+
+
 def _make_records(n: int) -> list[LinkPost]:
     records = []
     for i in range(n):
@@ -51,17 +62,7 @@ def test_feed_entries_contain_comment_content(tmp_path):
             tags=("news",),
         ),
     ]
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        records,
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, records)
     entries = _entries(root)
     assert len(entries) == 1
     content_el = entries[0].find(f"{ATOM_NS}content")
@@ -77,33 +78,13 @@ def test_record_with_empty_comment_feeds_through_without_error(tmp_path):
             comment="",
         ),
     ]
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        records,
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, records)
     entries = _entries(root)
     assert len(entries) == 1
 
 
 def test_generate_feed_with_empty_records_list_succeeds(tmp_path):
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        [],
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, [])
     entries = _entries(root)
     assert len(entries) == 0
 
@@ -116,17 +97,7 @@ def test_feed_entry_published_matches_record(tmp_path):
             comment="hello",
         ),
     ]
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        records,
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, records)
     entries = _entries(root)
     published_el = entries[0].find(f"{ATOM_NS}published")
     assert published_el is not None
@@ -142,17 +113,7 @@ def test_feed_entry_includes_category_terms_for_tagged_record(tmp_path):
             tags=("news", "tech"),
         ),
     ]
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        records,
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, records)
     entries = _entries(root)
     category_terms = {el.get("term") for el in entries[0].findall(f"{ATOM_NS}category")}
     assert category_terms == {"news", "tech"}
@@ -175,17 +136,7 @@ def test_entry_id_includes_published_so_resurfaced_urls_stay_distinct(tmp_path):
             comment="resurfaced",
         ),
     ]
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        records,
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, records)
     entries = _entries(root)
     assert len(entries) == 2
     ids = {el.find(f"{ATOM_NS}id").text for el in entries}
@@ -193,17 +144,7 @@ def test_entry_id_includes_published_so_resurfaced_urls_stay_distinct(tmp_path):
 
 
 def test_empty_records_list_feed_updated_is_epoch_fallback(tmp_path):
-    output_path = tmp_path / "feed.xml"
-
-    generate_feed(
-        [],
-        output_path,
-        feed_title="My Link Blog",
-        feed_link="https://example.com/",
-    )
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
+    root = _feed_root(tmp_path, [])
     updated_el = root.find(f"{ATOM_NS}updated")
     assert updated_el is not None
     assert updated_el.text.startswith("1970-01-01T00:00:00")

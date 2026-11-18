@@ -90,29 +90,29 @@ def _envelope(status: str, result: dict[str, Any] | None, error: dict[str, Any] 
     )
 
 
+def _dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "render":
+        return _run_render(args)
+    if args.command == "feed":
+        return _run_feed(args)
+    raise LinkBlogError("internal_error")
+
+
+def _emit(line: str) -> None:
+    sys.stdout.write(line + "\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
     try:
-        if args.command == "render":
-            result = _run_render(args)
-        elif args.command == "feed":
-            result = _run_feed(args)
-        else:
-            raise LinkBlogError("internal_error")
-
-        print(_envelope("ok", result, None))  # noqa: T201 -- the JSON envelope is the CLI output
+        result = _dispatch(args)
+        _emit(_envelope("ok", result, None))
         return 0
     except LinkBlogError as e:
-        print(  # noqa: T201 -- the JSON envelope is the CLI output
-            _envelope("fail", None, {"code": e.code, "fields": list(e.fields)})
-        )
+        _emit(_envelope("fail", None, {"code": e.code, "fields": list(e.fields)}))
         return 1
-    except Exception:  # noqa: BLE001 -- deliberate catch-all: a shell caller must
-        # never see a raw Python traceback on stdout (see plan.md's error-mapping
-        # design); any unanticipated exception is mapped to "internal_error".
-        print(  # noqa: T201 -- the JSON envelope is the CLI output
-            _envelope("fail", None, {"code": "internal_error", "fields": []})
-        )
+    except Exception:  # noqa: BLE001 -- a shell caller must never see a raw traceback on stdout
+        _emit(_envelope("fail", None, {"code": "internal_error", "fields": []}))
         return 1
