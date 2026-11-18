@@ -1,38 +1,68 @@
 # linkblog-commons
 
-linkblog-commons is a shared Python library for the home lab's blog
-projects that want a linkblog: a stream of short posts, each a link plus a
-few sentences of commentary, kept separate from long-form posts. It defines
-one normalized "link post" record, a renderer that turns that record into
-files a static site generator can build, and a feed generator that produces
-an Atom/RSS feed containing only link posts.
+linkblog-commons is a Python library and CLI that turns a link plus a short comment into a Hugo post file and an Atom feed. It exists so link posts stay on their own feed, apart from long-form posts.
 
-## Why link posts need to stay separate
+## Link posts need their own feed
 
-Research into whether linkblogging would grow blog traffic
-(`Development/Research/linkblogging-blog-traffic.md` in the Obsidian vault)
-found a real split: RSS readers, Bluesky's chronological feed, and
-curated-directory sites like Kagi Small Web are reviving in 2026 and reward
-exactly this format. AI search engines (ChatGPT, Perplexity, Google AI
-Overviews) reward the opposite — dense, comprehensive, single-topic posts —
-and treat a stream of short link posts as citation-weak. A blog that wants
-both needs to keep the two content types structurally distinct: separate
-feed, separate section, so a link post never dilutes the data-dense posts
-tuned for AI citation, and the AI-citation tuning never talks the blog out
-of publishing something short.
+Short link posts and dense long-form posts serve different readers. RSS readers and curated directories reward link posts. AI search engines reward long, single-topic posts and rate link streams as weak sources. A separate feed and a separate content folder keep each type from diluting the other. The research is in the Obsidian vault at `Development/Research/linkblogging-blog-traffic.md`.
 
-## How this differs from its siblings
+## What it does
 
-`scraper-commons` holds stealth/anti-detection scraping logic.
-`api-clients-commons` holds real, credentialed API clients.
-`feed-commons` polls and normalizes an *incoming* public feed. This repo is
-none of those — it produces content, not fetches it: given a link and a
-comment, it emits a post file and an outgoing feed entry.
+1. `LinkPost` is the one record. It holds a URL, an ISO-8601 timestamp with a timezone, a comment (plain text or markdown) and tags.
+2. `hugo_render` writes one Markdown file with front matter. The name is `<date>-<hash>.md`. The title and URL both come from the link URL.
+3. `generate_feed` writes an Atom feed that holds only link posts.
 
-## Built when a real consumer needs it, not speculatively
+The render and feed code makes no network calls. It never fetches the linked page.
 
-`CONTRACT.md` defines the intended shape, but each submodule is only built
-once a real project needs it — same discipline `scraper-commons`,
-`api-clients-commons`, and `feed-commons` use for their own modules. Status
-today: scaffold only, no submodule implemented yet. `pres-ber-blog` (Hugo)
-is the first intended consumer.
+The first consumer is `pres-ber-blog` (Hugo). Sibling repos `scraper-commons`, `api-clients-commons` and `feed-commons` fetch data. This repo only writes output.
+
+## Install
+
+```bash
+uv sync
+```
+
+Python 3.11 or newer. The one runtime dependency is `feedgen`.
+
+## Use the CLI
+
+The CLI prints one JSON line. `status` is `ok` or `fail`. On failure, `error.code` is one of `missing_fields`, `invalid_json`, `invalid_timestamp`, `io_error` or `internal_error`. The exit code is 0 on success and 1 on failure.
+
+Render one post. The output directory must exist and be writable:
+
+```bash
+python -m linkblog_commons render --url https://example.com \
+  --published 2026-11-01T10:00:00+00:00 --comment "Worth a read." \
+  --tag python --output-dir content/links
+```
+
+Build a feed from a JSON array of posts. Use `--input -` to read stdin:
+
+```bash
+python -m linkblog_commons feed --input posts.json --output links.xml \
+  --title "Links" --link https://example.com/links
+```
+
+Each array item has `url` and `published`. `comment` and `tags` are optional. `--id` sets the feed ID. It defaults to `--link`.
+
+## Use the Python API
+
+```python
+from linkblog_commons.record import LinkPost
+from linkblog_commons.render import hugo_render
+from linkblog_commons.feed import generate_feed
+```
+
+## Test
+
+```bash
+bash scripts/py-validate.sh
+```
+
+The script runs ruff, mypy and pytest. Run the other gates through the hook, or see `AGENTS.md`. Tests block network access. Run `scripts/install-hooks.sh` once per clone to enable the git hooks. The hooks need `gitleaks`.
+
+## Where things live
+
+- `src/linkblog_commons/`: `record.py`, `render.py`, `feed.py`, `cli.py`, `errors.py`.
+- `CONTRACT.md`: the design rules.
+- `docs/core-record-render-feed/`: the spec for the first build.

@@ -33,7 +33,7 @@ def split_front_matter(text: str) -> tuple[list[str], str]:
     for i in range(1, len(lines)):
         if lines[i] == "---":
             front_matter_lines = lines[1:i]
-            body = "\n".join(lines[i + 1:])
+            body = "\n".join(lines[i + 1 :])
             return front_matter_lines, body
     raise AssertionError("no closing '---' delimiter found")
 
@@ -137,12 +137,7 @@ def test_missing_content_dir_raises_io_error_and_does_not_create_it(tmp_path):
 # 6. A comment containing a bare '---' line and a colon does not corrupt the
 #    front matter -- the front matter still parses/delimits correctly.
 def test_comment_with_bare_delimiter_and_colon_does_not_corrupt_front_matter(tmp_path):
-    tricky_comment = (
-        "Intro line.\n"
-        "---\n"
-        "key: value inside the comment, not YAML\n"
-        "Trailing line."
-    )
+    tricky_comment = "Intro line.\n---\nkey: value inside the comment, not YAML\nTrailing line."
     record = make_record(comment=tricky_comment)
 
     out_path = hugo_render(record, tmp_path)
@@ -173,7 +168,7 @@ def test_quote_raises_io_error_on_raw_newline():
 def test_quote_escapes_backslashes_and_double_quotes():
     assert _quote(r"a\b") == r'"a\\b"'
     assert _quote('say "hi"') == r'"say \"hi\""'
-    assert _quote(r'\"') == r'"\\\""'
+    assert _quote(r"\"") == r'"\\\""'
 
 
 # 9. A URL containing a raw newline propagates through hugo_render() as an

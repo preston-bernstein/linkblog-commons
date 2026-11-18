@@ -34,21 +34,39 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 VENV_PYTHON = sys.executable
 
 
+def _render_argv(output_dir, *extra, url="http://x.com"):
+    return [
+        "render",
+        "--url",
+        url,
+        "--published",
+        "2026-08-15T10:00:00+00:00",
+        *extra,
+        "--output-dir",
+        str(output_dir),
+    ]
+
+
+def _feed_argv(input_path, output_path, *extra):
+    return [
+        "feed",
+        "--input",
+        str(input_path),
+        "--output",
+        str(output_path),
+        "--title",
+        "Test",
+        "--link",
+        "http://example.com",
+        *extra,
+    ]
+
+
 # --- In-process: render ------------------------------------------------------
 
 
 def test_main_render_prints_ok_envelope_and_returns_zero(tmp_path, capsys):
-    exit_code = main(
-        [
-            "render",
-            "--url",
-            "http://x.com",
-            "--published",
-            "2026-08-15T10:00:00+00:00",
-            "--output-dir",
-            str(tmp_path),
-        ]
-    )
+    exit_code = main(_render_argv(tmp_path))
 
     assert exit_code == 0
 
@@ -64,21 +82,7 @@ def test_main_render_prints_ok_envelope_and_returns_zero(tmp_path, capsys):
 
 def test_main_render_passes_comment_and_tags_through_to_output(tmp_path, capsys):
     exit_code = main(
-        [
-            "render",
-            "--url",
-            "http://x.com",
-            "--published",
-            "2026-08-15T10:00:00+00:00",
-            "--comment",
-            "hello from the CLI",
-            "--tag",
-            "a",
-            "--tag",
-            "b",
-            "--output-dir",
-            str(tmp_path),
-        ]
+        _render_argv(tmp_path, "--comment", "hello from the CLI", "--tag", "a", "--tag", "b")
     )
 
     assert exit_code == 0
@@ -104,17 +108,7 @@ def test_main_render_missing_required_arg_exits_two(tmp_path, capsys):
 
 
 def test_main_render_omitted_comment_defaults_to_empty_body(tmp_path, capsys):
-    exit_code = main(
-        [
-            "render",
-            "--url",
-            "http://x.com",
-            "--published",
-            "2026-08-15T10:00:00+00:00",
-            "--output-dir",
-            str(tmp_path),
-        ]
-    )
+    exit_code = main(_render_argv(tmp_path))
 
     assert exit_code == 0
     envelope = json.loads(capsys.readouterr().out.strip())
@@ -161,9 +155,7 @@ FEED_ARGS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "dropped_flag", ["--input", "--output", "--title", "--link"]
-)
+@pytest.mark.parametrize("dropped_flag", ["--input", "--output", "--title", "--link"])
 def test_main_feed_missing_any_required_arg_exits_two(dropped_flag):
     args = list(FEED_ARGS)
     idx = args.index(dropped_flag)
@@ -194,19 +186,7 @@ def test_main_feed_prints_ok_envelope_and_returns_zero(tmp_path, capsys):
     )
     output_path = tmp_path / "feed.xml"
 
-    exit_code = main(
-        [
-            "feed",
-            "--input",
-            str(input_path),
-            "--output",
-            str(output_path),
-            "--title",
-            "Test",
-            "--link",
-            "http://example.com",
-        ]
-    )
+    exit_code = main(_feed_argv(input_path, output_path))
 
     assert exit_code == 0
 
@@ -224,28 +204,12 @@ def test_main_feed_prints_ok_envelope_and_returns_zero(tmp_path, capsys):
 def test_main_feed_with_id_flag_sets_feed_id(tmp_path, capsys):
     input_path = tmp_path / "records.json"
     input_path.write_text(
-        json.dumps(
-            [{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]
-        ),
+        json.dumps([{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]),
         encoding="utf-8",
     )
     output_path = tmp_path / "feed.xml"
 
-    exit_code = main(
-        [
-            "feed",
-            "--input",
-            str(input_path),
-            "--output",
-            str(output_path),
-            "--title",
-            "Test",
-            "--link",
-            "http://example.com",
-            "--id",
-            "urn:custom-feed-id",
-        ]
-    )
+    exit_code = main(_feed_argv(input_path, output_path, "--id", "urn:custom-feed-id"))
 
     assert exit_code == 0
     capsys.readouterr()
@@ -256,25 +220,11 @@ def test_main_feed_with_id_flag_sets_feed_id(tmp_path, capsys):
 
 
 def test_main_feed_stdin_input_in_process(tmp_path, capsys, monkeypatch):
-    records = json.dumps(
-        [{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}]
-    )
+    records = json.dumps([{"url": "http://x.com", "published": "2026-08-15T10:00:00+00:00"}])
     monkeypatch.setattr(sys, "stdin", io.StringIO(records))
     output_path = tmp_path / "feed.xml"
 
-    exit_code = main(
-        [
-            "feed",
-            "--input",
-            "-",
-            "--output",
-            str(output_path),
-            "--title",
-            "Test",
-            "--link",
-            "http://example.com",
-        ]
-    )
+    exit_code = main(_feed_argv("-", output_path))
 
     assert exit_code == 0
     envelope = json.loads(capsys.readouterr().out.strip())
@@ -288,19 +238,7 @@ def test_main_feed_invalid_json_input_maps_to_invalid_json_error(tmp_path, capsy
     input_path.write_text("not valid json {{{", encoding="utf-8")
     output_path = tmp_path / "feed.xml"
 
-    exit_code = main(
-        [
-            "feed",
-            "--input",
-            str(input_path),
-            "--output",
-            str(output_path),
-            "--title",
-            "Test",
-            "--link",
-            "http://example.com",
-        ]
-    )
+    exit_code = main(_feed_argv(input_path, output_path))
 
     assert exit_code == 1
     envelope = json.loads(capsys.readouterr().out.strip())
@@ -313,19 +251,7 @@ def test_main_feed_non_list_json_input_maps_to_invalid_json_error(tmp_path, caps
     input_path.write_text(json.dumps({"url": "http://x.com"}), encoding="utf-8")
     output_path = tmp_path / "feed.xml"
 
-    exit_code = main(
-        [
-            "feed",
-            "--input",
-            str(input_path),
-            "--output",
-            str(output_path),
-            "--title",
-            "Test",
-            "--link",
-            "http://example.com",
-        ]
-    )
+    exit_code = main(_feed_argv(input_path, output_path))
 
     assert exit_code == 1
     envelope = json.loads(capsys.readouterr().out.strip())
@@ -337,17 +263,7 @@ def test_main_feed_non_list_json_input_maps_to_invalid_json_error(tmp_path, caps
 
 
 def test_main_render_empty_url_prints_fail_envelope_and_returns_one(tmp_path, capsys):
-    exit_code = main(
-        [
-            "render",
-            "--url",
-            "",
-            "--published",
-            "2026-08-15T10:00:00+00:00",
-            "--output-dir",
-            str(tmp_path),
-        ]
-    )
+    exit_code = main(_render_argv(tmp_path, url=""))
 
     assert exit_code == 1
 
@@ -365,17 +281,7 @@ def test_main_unanticipated_exception_maps_to_internal_error(tmp_path, capsys, m
 
     monkeypatch.setattr("linkblog_commons.cli.hugo_render", _boom)
 
-    exit_code = main(
-        [
-            "render",
-            "--url",
-            "http://x.com",
-            "--published",
-            "2026-08-15T10:00:00+00:00",
-            "--output-dir",
-            str(tmp_path),
-        ]
-    )
+    exit_code = main(_render_argv(tmp_path))
 
     assert exit_code == 1
     envelope = json.loads(capsys.readouterr().out.strip())

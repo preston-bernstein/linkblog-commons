@@ -1,0 +1,13 @@
+{
+ "_reason": "generate_feed has 5 parameters; cutting one changes the public API (a design decision for pres-ber-blog). The other limits are met.",
+ "functions": {
+  "src/linkblog_commons/feed.py::generate_feed": {
+   "param": 5,
+   "token": 127,
+   "nd": 0,
+   "ccn": 4,
+   "nloc": 21,
+   "length": 24
+  }
+ }
+}

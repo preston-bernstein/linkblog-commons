@@ -1,0 +1,6 @@
+# Allow-list of third-party actions. A new `uses:` outside this list fails the gate.
+rules:
+  forbidden-uses:
+    config:
+      allow:
+        - actions/checkout
